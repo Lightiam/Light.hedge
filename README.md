@@ -40,6 +40,7 @@ By using this software, you agree to use it solely for learning purposes.
 - [Usage](#usage)
   - [Running the Hedge Fund](#running-the-hedge-fund)
   - [Running the Backtester](#running-the-backtester)
+  - [Running the Web UI](#running-the-web-ui)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [Feature Requests](#feature-requests)
@@ -125,6 +126,21 @@ You can optionally specify the start and end dates to backtest over a specific t
 ```bash
 poetry run python src/backtester.py --ticker AAPL,MSFT,NVDA --start-date 2024-01-01 --end-date 2024-03-01
 ```
+
+### Running the Web UI
+```bash
+poetry run python src/web_app.py
+```
+
+This will start the LightHedge AI web application on http://localhost:8501. Open this URL in your browser to access the application.
+
+**Features:**
+- Modern, responsive UI with interactive dashboard
+- GPT-like chat interface for interacting with the AI
+- Detailed insights with interactive visualizations
+- Real-time portfolio tracking and analysis
+- Customizable analyst selection and configuration
+- Support for multiple stock tickers and date ranges
 
 ## Project Structure 
 ```
