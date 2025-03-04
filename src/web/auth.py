@@ -47,7 +47,6 @@ def verify_credentials(username, password):
     return credentials[username]["password"] == hashed_password
 
 
-
 def login_page():
     """Display the login page and handle authentication."""
     # Initialize credentials if needed
