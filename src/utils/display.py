@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 from tabulate import tabulate
-from .analysts import ANALYST_ORDER
+from src.utils.analysts import ANALYST_ORDER
 import os
 
 
