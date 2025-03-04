@@ -325,6 +325,12 @@ with tab1:
     # Run analysis button
     if st.button("Run Analysis", key="run_analysis"):
         with st.spinner("Running hedge fund analysis..."):
+            # Get selected analysts from session state if not defined
+            if 'selected_analysts' not in locals():
+                selected_analysts = []
+                for display, value in ANALYST_ORDER:
+                    selected_analysts.append(value)
+            
             # Create the workflow with selected analysts
             workflow = create_workflow(selected_analysts)
             
