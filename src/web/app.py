@@ -19,6 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.main import run_hedge_fund, create_workflow
 from src.utils.analysts import ANALYST_ORDER
 from src.llm.models import LLM_ORDER, get_model_info
+from src.web.auth import login_page, is_authenticated, logout
 
 # Set page configuration
 st.set_page_config(
@@ -225,6 +226,9 @@ h3 {
 """, unsafe_allow_html=True)
 
 # Initialize session state
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
@@ -236,13 +240,22 @@ if 'portfolio' not in st.session_state:
         "realized_gains": {}
     }
 
-# Header
-st.title("🚀 LightHedge AI")
-st.markdown("### An AI-powered hedge fund team making intelligent trading decisions")
+# Check if user is authenticated
+if not is_authenticated():
+    login_page()
+else:
+    # Header
+    st.title("🚀 LightHedge AI")
+    st.markdown("### An AI-powered hedge fund team making intelligent trading decisions")
 
-# Sidebar for configuration
-with st.sidebar:
-    st.header("Configuration")
+    # Sidebar for configuration
+    with st.sidebar:
+        # Add logout button at the top of the sidebar
+        if st.button("Logout", key="logout_button"):
+            logout()
+            st.rerun()
+            
+        st.header("Configuration")
     
     # Ticker input
     ticker_input = st.text_input("Enter stock tickers (comma-separated)", "AAPL,MSFT,NVDA")
@@ -474,7 +487,7 @@ with tab2:
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         
         # Rerun to update the chat display
-        st.experimental_rerun()
+        st.rerun()
 
 with tab3:
     st.header("Backtesting")
@@ -482,3 +495,5 @@ with tab3:
     
     # Placeholder for backtesting UI
     st.info("Coming soon: Backtest your trading strategies against historical data.")
+    
+# End of authenticated content block
