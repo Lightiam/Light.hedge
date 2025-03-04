@@ -19,7 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.main import run_hedge_fund, create_workflow
 from src.utils.analysts import ANALYST_ORDER
 from src.llm.models import LLM_ORDER, get_model_info
-from src.web.auth import login_page, is_authenticated, logout
+from src.web.auth import login_page, is_authenticated, logout, get_user_role, is_admin
 
 # Set page configuration
 st.set_page_config(
@@ -254,6 +254,23 @@ else:
         if st.button("Logout", key="logout_button"):
             logout()
             st.rerun()
+        
+        # Display user information and role
+        username = st.session_state.username
+        role = get_user_role(username)
+        
+        # User info container with styling
+        st.markdown("""
+        <div style="background-color: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0;">
+            <div style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.25rem;">LOGGED IN AS</div>
+            <div style="font-size: 1.125rem; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">{}</div>
+            <div style="display: inline-block; background-color: {}; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">{}</div>
+        </div>
+        """.format(
+            username, 
+            "#3b82f6" if role == "admin" else "#64748b",
+            role
+        ), unsafe_allow_html=True)
             
         st.header("Configuration")
     
@@ -313,28 +330,35 @@ with tab1:
     
     # Run analysis button
     if st.button("Run Analysis", key="run_analysis"):
-        with st.spinner("Running hedge fund analysis..."):
-            # Create the workflow with selected analysts
-            workflow = create_workflow(selected_analysts)
-            
-            # Run the hedge fund
-            result = run_hedge_fund(
-                tickers=tickers,
-                start_date=start_date.strftime("%Y-%m-%d"),
-                end_date=end_date.strftime("%Y-%m-%d"),
-                portfolio=st.session_state.portfolio,
-                show_reasoning=show_reasoning,
-                selected_analysts=selected_analysts,
-                model_name=selected_model,
-                model_provider=model_provider,
-            )
-            
-            # Store the result in session state
-            st.session_state.last_result = result
-            
-            # Add to chat history
-            system_message = f"Analysis completed for {', '.join(tickers)} from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-            st.session_state.chat_history.append({"role": "system", "content": system_message})
+        # Check if user is admin for certain advanced features
+        is_user_admin = is_admin()
+        
+        # If not admin, enforce ticker limit
+        if not is_user_admin and len(tickers) > 3:
+            st.warning("As a regular user, you are limited to analyzing up to 3 tickers at a time. Please reduce your selection or contact an admin for full access.")
+        else:
+            with st.spinner("Running hedge fund analysis..."):
+                # Create the workflow with selected analysts
+                workflow = create_workflow(selected_analysts)
+                
+                # Run the hedge fund
+                result = run_hedge_fund(
+                    tickers=tickers,
+                    start_date=start_date.strftime("%Y-%m-%d"),
+                    end_date=end_date.strftime("%Y-%m-%d"),
+                    portfolio=st.session_state.portfolio,
+                    show_reasoning=show_reasoning,
+                    selected_analysts=selected_analysts,
+                    model_name=selected_model,
+                    model_provider=model_provider,
+                )
+                
+                # Store the result in session state
+                st.session_state.last_result = result
+                
+                # Add to chat history
+                system_message = f"Analysis completed for {', '.join(tickers)} from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
+                st.session_state.chat_history.append({"role": "system", "content": system_message})
     
     # Display results if available
     if 'last_result' in st.session_state:
@@ -491,9 +515,38 @@ with tab2:
 
 with tab3:
     st.header("Backtesting")
-    st.markdown("Backtesting functionality will be implemented in a future update.")
     
-    # Placeholder for backtesting UI
-    st.info("Coming soon: Backtest your trading strategies against historical data.")
+    # Check if user is admin for backtesting access
+    is_user_admin = is_admin()
+    
+    if is_user_admin:
+        st.markdown("Backtesting functionality will be implemented in a future update.")
+        
+        # Placeholder for backtesting UI
+        st.info("Coming soon: Backtest your trading strategies against historical data.")
+        
+        # Admin-only advanced configuration options
+        with st.expander("Advanced Configuration (Admin Only)"):
+            st.slider("Simulation Period (Days)", 30, 365, 180)
+            st.number_input("Initial Capital", min_value=10000, max_value=10000000, value=100000, step=10000)
+            st.selectbox("Risk Model", ["Conservative", "Moderate", "Aggressive"])
+            st.checkbox("Enable Monte Carlo Simulation")
+    else:
+        # Message for regular users
+        st.warning("Backtesting is an advanced feature available only to admin users. Please contact an administrator for access.")
+        
+        # Show upgrade info
+        st.markdown("""
+        <div style="background-color: #f8fafc; padding: 1.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-top: 1rem;">
+            <h3 style="margin-top: 0; color: #1e293b;">Need Advanced Features?</h3>
+            <p style="color: #475569;">Contact your administrator to request admin privileges for access to advanced features including:</p>
+            <ul style="color: #475569;">
+                <li>Unlimited ticker analysis</li>
+                <li>Backtesting capabilities</li>
+                <li>Advanced portfolio optimization</li>
+                <li>Custom strategy development</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
 # End of authenticated content block
